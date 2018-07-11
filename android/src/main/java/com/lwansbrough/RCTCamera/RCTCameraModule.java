@@ -6,6 +6,11 @@
 package com.lwansbrough.RCTCamera;
 
 import android.content.ContentValues;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.media.*;
 import android.net.Uri;
@@ -501,6 +506,60 @@ public class RCTCameraModule extends ReactContextBaseJavaModule
         } else {
             captureWithOrientation(options, promise, orientation);
         }
+    }
+
+    @ReactMethod
+    public void addFilterImageOverlayOnBaseImage(final String baseImageURI, final String filterImageURI, final Promise promise) {
+
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+
+        File baseImgFile = new  File(baseImageURI.replace("file://", ""));
+
+        Bitmap baseImageBitmap = null, filterImageBitmap = null;
+        if(baseImgFile.exists()){
+            baseImageBitmap = BitmapFactory.decodeFile(baseImgFile.getAbsolutePath());
+        }
+
+        try{
+            URL url = new URL(filterImageURI);
+            URLConnection conn = url.openConnection();
+            filterImageBitmap = BitmapFactory.decodeStream(conn.getInputStream());
+
+        } catch (Exception e){
+            Log.v("error downloading------", ""+e);
+        } finally {
+
+            Bitmap bmOverlay = Bitmap.createBitmap(baseImageBitmap.getWidth(), baseImageBitmap.getHeight(), baseImageBitmap.getConfig());
+            Canvas canvas = new Canvas(bmOverlay);
+            canvas.drawBitmap(baseImageBitmap, new Matrix(), null);
+            canvas.drawBitmap(getResizedBitmap(filterImageBitmap, baseImageBitmap.getWidth(), baseImageBitmap.getHeight()), 0, 0, null);
+
+            String filename = timeStamp + "IMG.jpg";
+            File sd = new File (Environment.getExternalStorageDirectory() + "/Buzznog");
+
+            if (!sd.exists()) {
+                File imageDirectory = new File("/sdcard/Buzznog/");
+                imageDirectory.mkdirs();
+            }
+            File dest = new File(sd, filename);
+
+            try {
+                FileOutputStream out = new FileOutputStream(dest);
+                bmOverlay.compress(Bitmap.CompressFormat.JPEG, 50, out);
+                out.flush();
+                out.close();
+                getReactApplicationContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(dest)));
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                WritableMap response = new WritableNativeMap();
+                response.putString("path", Uri.fromFile(dest).toString());
+                promise.resolve(response);
+            }
+
+        }
+
+
     }
 
     private void captureWithOrientation(final ReadableMap options, final Promise promise, int deviceOrientation) {

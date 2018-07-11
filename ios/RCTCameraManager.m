@@ -11,6 +11,12 @@
 #import <ImageIO/ImageIO.h>
 #import "RCTSensorOrientationChecker.h"
 
+#import <AssetsLibrary/ALAsset.h>
+#import <AssetsLibrary/ALAssetRepresentation.h>
+
+typedef void (^ALAssetsLibraryAssetForURLResultBlock)(ALAsset *asset);
+typedef void (^ALAssetsLibraryAccessFailureBlock)(NSError *error);
+
 @interface RCTCameraManager ()
 
 @property (strong, nonatomic) RCTSensorOrientationChecker * sensorOrientationChecker;
@@ -421,6 +427,85 @@ RCT_EXPORT_METHOD(hasFlash:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRej
     AVCaptureDevice *device = [self.videoCaptureDeviceInput device];
     resolve(@(device.hasFlash));
 }
+
+RCT_EXPORT_METHOD(addFilterImageOverlayOnBaseImage:(NSString *)baseImageURI filterImageURI:(NSString *) filterImageURI resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    
+    NSString *timeStamp;
+    NSDate *now = [NSDate date];
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    [dateFormatter setDateFormat:@"yyyy-MM-dd-HH-mm-ss"];
+    timeStamp = [dateFormatter stringFromDate:now];
+    
+    ALAssetsLibrary* assetslibrary = [[ALAssetsLibrary alloc] init];
+    [assetslibrary assetForURL:[NSURL URLWithString:baseImageURI] resultBlock: ^(ALAsset *myasset){
+        
+        ALAssetRepresentation *rep = [myasset defaultRepresentation];
+        CGImageRef iref = [rep fullResolutionImage];
+        
+        if (iref){
+            
+                UIImage *originalImg = [UIImage imageWithCGImage:iref scale:[rep scale] orientation:(UIImageOrientation)[rep orientation]];
+                    
+                    
+                    NSURLSessionTask *task = [[NSURLSession sharedSession] dataTaskWithURL:[NSURL URLWithString:filterImageURI] completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+                        if (data) {
+                            UIImage *filterImg = [UIImage imageWithData:data];
+                            if (filterImg) {
+                                dispatch_async(dispatch_get_main_queue(), ^{
+                                    UIImage *finalImage = [self mergeImage:originalImg withImage:filterImg];
+                                    
+                                    ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+                                    
+                                    [library writeImageToSavedPhotosAlbum:[finalImage CGImage] orientation:(ALAssetOrientation)[finalImage imageOrientation] completionBlock:^(NSURL *assetURL, NSError *error){
+                                        if (error == nil) {
+                                            resolve(@{@"path":[assetURL absoluteString]});
+                                        }
+                                        else {
+                                            reject(RCTErrorUnspecified, nil, RCTErrorWithMessage(error.description));
+                                        }
+                                    }];
+                                    
+                                });
+                            }
+                        }
+                    }];
+                    [task resume];
+              
+            
+            
+        }
+    } failureBlock:failureblock];
+    
+
+}
+
+
+- (UIImage*)mergeImage:(UIImage*)first withImage:(UIImage*)second
+{
+    UIGraphicsBeginImageContextWithOptions(first.size, NO, 0.0f);
+    [first drawInRect:CGRectMake(0, 0, first.size.width, first.size.height)];
+    [second drawInRect:CGRectMake(0, 0, first.size.width, first.size.height)];
+    UIImage *resultImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return resultImage;
+}
+
+- (void)mergeImage:(UIImage*)first {
+    
+}
+
+ALAssetsLibraryAccessFailureBlock failureblock  = ^(NSError *myerror){
+    
+    //failed to get image.
+};
+
+- (NSString *)stringWithDate:(NSDate *)date
+{
+    return [NSDateFormatter localizedStringFromDate:date
+                                          dateStyle:NSDateFormatterMediumStyle
+                                          timeStyle:NSDateFormatterNoStyle];
+}
+
 
 - (void)startSession {
 #if TARGET_IPHONE_SIMULATOR

@@ -236,6 +236,11 @@ export default class Camera extends Component {
     return CameraManager.capture(options);
   }
 
+  addFilterImageOverlayOnBaseImage(baseImageURI, filterImageURI){
+    
+    return CameraManager.addFilterImageOverlayOnBaseImage(baseImageURI, filterImageURI);    
+  }
+  
   stopCapture() {
     if (this.state.isRecording) {
       this.setState({ isRecording: false });
