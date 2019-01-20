@@ -5,13 +5,22 @@
 package com.lwansbrough.RCTCamera;
 
 import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.hardware.SensorManager;
+import android.util.Log;
 import android.view.OrientationEventListener;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import java.util.List;
+
+import javax.annotation.MatchesPattern;
 
 public class RCTCameraView extends ViewGroup {
     private final OrientationEventListener _orientationListener;
@@ -23,6 +32,8 @@ public class RCTCameraView extends ViewGroup {
     private String _captureQuality = "high";
     private int _torchMode = -1;
     private int _flashMode = -1;
+    private OnColorChangeListener onColorChangeListener;
+
 
     public RCTCameraView(Context context) {
         super(context);
@@ -37,7 +48,6 @@ public class RCTCameraView extends ViewGroup {
                 }
             }
         };
-
         if (_orientationListener.canDetectOrientation()) {
             _orientationListener.enable();
         } else {
@@ -52,9 +62,8 @@ public class RCTCameraView extends ViewGroup {
 
     @Override
     public void onViewAdded(View child) {
-        if (this._viewFinder == child) return;
-        // remove and readd view to make sure it is in the back.
-        // @TODO figure out why there was a z order issue in the first place and fix accordingly.
+        if(_viewFinder == child) return;
+
         this.removeView(this._viewFinder);
         this.addView(this._viewFinder, 0);
     }
@@ -70,15 +79,17 @@ public class RCTCameraView extends ViewGroup {
             RCTCamera.getInstance().adjustPreviewLayout(type);
         } else {
             _viewFinder = new RCTCameraViewFinder(_context, type);
+            _viewFinder.setOnColorChangeListener(onColorChangeListener);
             if (-1 != this._flashMode) {
                 _viewFinder.setFlashMode(this._flashMode);
             }
             if (-1 != this._torchMode) {
                 _viewFinder.setTorchMode(this._torchMode);
             }
-            addView(_viewFinder);
+            this.addView(_viewFinder);
         }
     }
+
 
     public void setCaptureMode(final int captureMode) {
         this._captureMode = captureMode;
@@ -182,5 +193,17 @@ public class RCTCameraView extends ViewGroup {
 
         this._viewFinder.layout(viewFinderPaddingX, viewFinderPaddingY, viewFinderPaddingX + viewfinderWidth, viewFinderPaddingY + viewfinderHeight);
         this.postInvalidate(this.getLeft(), this.getTop(), this.getRight(), this.getBottom());
+    }
+
+    public void setOnColorChangeListener(OnColorChangeListener onColorChangeListener) {
+        this.onColorChangeListener = onColorChangeListener;
+    }
+
+    public void setColorExtractionEnabled(boolean colorExtractionEnabled) {
+        RCTCamera.getInstance().setColorExtractionEnabled(colorExtractionEnabled);
+    }
+
+    public void isColorExtractionEnabled() {
+       return RCTCamera.getInstance().isColorExtractionEnabled();
     }
 }

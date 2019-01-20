@@ -5,12 +5,20 @@
 package com.lwansbrough.RCTCamera;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ImageFormat;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.os.AsyncTask;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
@@ -19,9 +27,11 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.Locale;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.BinaryBitmap;
@@ -42,12 +52,20 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
     private boolean _isStopping;
     private Camera _camera;
     private float mFingerSpacing;
+    private String lastColor = "";
+    protected int[] mSelectedColor = new int[3];
 
     // concurrency lock for barcode scanner to avoid flooding the runtime
     public static volatile boolean barcodeScannerTaskLock = false;
 
     // reader instance for the barcode scanner
     private final MultiFormatReader _multiFormatReader = new MultiFormatReader();
+    private OnColorChangeListener onColorChangeListener;
+
+
+    public int[] getmSelectedColor() {
+        return mSelectedColor;
+    }
 
     public RCTCameraViewFinder(Context context, int type) {
         super(context);
@@ -211,9 +229,9 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
 
     /**
      * Parse barcodes as BarcodeFormat constants.
-     *
+     * <p>
      * Supports all iOS codes except [code39mod43, itf14]
-     *
+     * <p>
      * Additionally supports [codabar, maxicode, rss14, rssexpanded, upca, upceanextension]
      */
     private BarcodeFormat parseBarCodeString(String c) {
@@ -277,11 +295,42 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
         _multiFormatReader.setHints(hints);
     }
 
+    public void decodeColor(int[] averageColor, byte[] data, int count, int x, int y, int width, int height) {
+        int size = width * height;
+        int xby2 = x / 2;
+        int yby2 = y / 2;
+        float V = ((float) (data[((xby2 * 2) + size) + (yby2 * width)] & 255)) - 128.0f;
+        float U = ((float) (data[(((xby2 * 2) + size) + 1) + (yby2 * width)] & 255)) - 128.0f;
+        float Yf = (1.164f * ((float) (data[(y * width) + x] & 255))) - 16.0f;
+        int red = (int) ((1.596f * V) + Yf);
+        int green = (int) ((Yf - (0.813f * V)) - (0.391f * U));
+        int blue = (int) ((2.018f * U) + Yf);
+        if (red < 0) {
+            red = 0;
+        } else if (red > 255) {
+            red = 255;
+        }
+        if (green < 0) {
+            green = 0;
+        } else if (green > 255) {
+            green = 255;
+        }
+        if (blue < 0) {
+            blue = 0;
+        } else if (blue > 255) {
+            blue = 255;
+        }
+        averageColor[0] = averageColor[0] + ((red - averageColor[0]) / count);
+        averageColor[1] = averageColor[1] + ((green - averageColor[1]) / count);
+        averageColor[2] = averageColor[2] + ((blue - averageColor[2]) / count);
+    }
+
+
     /**
      * Spawn a barcode reader task if
-     *  - the barcode scanner is enabled (has a onBarCodeRead function)
-     *  - one isn't already running
-     *
+     * - the barcode scanner is enabled (has a onBarCodeRead function)
+     * - one isn't already running
+     * <p>
      * See {Camera.PreviewCallback}
      */
     public void onPreviewFrame(byte[] data, Camera camera) {
@@ -289,6 +338,44 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
             RCTCameraViewFinder.barcodeScannerTaskLock = true;
             new ReaderAsyncTask(camera, data).execute();
         }
+
+        if(RCTCamera.getInstance().isColorExtractionEnabled())
+        {
+            int frameHeight = camera.getParameters().getPreviewSize().height;
+            int frameWidth = camera.getParameters().getPreviewSize().width;
+            this.mSelectedColor[0] = 0;
+            this.mSelectedColor[1] = 0;
+            this.mSelectedColor[2] = 0;
+            int midX = frameWidth / 2;
+            int midY = frameHeight / 2;
+
+            int idx = (frameWidth) * (frameHeight / 2) + (frameWidth / 2);
+
+            for (int i = 0; i <= 5; i++) {
+                for (int j = 0; j <= 5; j++) {
+                    decodeColor(mSelectedColor, data, 5, (midX - 5) + i, (midY - 5) + j, frameWidth, frameHeight);
+                }
+            }
+
+            String hexColor = String.format("#%02x%02x%02x", mSelectedColor[0], mSelectedColor[1], mSelectedColor[2]);
+            if (!lastColor.equals(hexColor)) {
+                lastColor = hexColor;
+                onColorChangeListener.onColorChangeListener(hexColor);
+                RCTCamera.getInstance().setCurrentColor(hexColor);
+            }
+        }
+    }
+
+    public int getPreviewWidth() {
+        return RCTCamera.getInstance().getPreviewWidth(this._cameraType);
+    }
+
+    public int getPreviewHeight() {
+        return RCTCamera.getInstance().getPreviewHeight(this._cameraType);
+    }
+
+    public void setOnColorChangeListener(OnColorChangeListener onColorChangeListener) {
+        this.onColorChangeListener = onColorChangeListener;
     }
 
     private class ReaderAsyncTask extends AsyncTask<Void, Void, Void> {
@@ -401,7 +488,7 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
 
     /**
      * Handles setting focus to the location of the event.
-     *
+     * <p>
      * Note that this will override the focus mode on the camera to FOCUS_MODE_AUTO if available,
      * even if this was previously something else (such as FOCUS_MODE_CONTINUOUS_*; see also
      * {@link #startCamera()}. However, this makes sense - after the user has initiated any
@@ -461,7 +548,9 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
         }
     }
 
-    /** Determine the space between the first two fingers */
+    /**
+     * Determine the space between the first two fingers
+     */
     private float getFingerSpacing(MotionEvent event) {
         float x = event.getX(0) - event.getX(1);
         float y = event.getY(0) - event.getY(1);

@@ -518,6 +518,13 @@ public class RCTCameraModule extends ReactContextBaseJavaModule
     }
 
     @ReactMethod
+    public void getCurrentColor(final Promise promise) {
+        if (RCTCamera.getInstance() != null) {
+            promise.resolve(RCTCamera.getInstance().getCurrentColor());
+        }
+    }
+
+    @ReactMethod
     public void addFilterImageOverlayOnBaseImage(final String baseImageURI, final String filterImageURI, final Promise promise) {
 
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());

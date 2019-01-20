@@ -22,10 +22,13 @@ public class RCTCamera {
     private static final Resolution RESOLUTION_720P = new Resolution(1280, 720);
     private static final Resolution RESOLUTION_1080P = new Resolution(1920, 1080);
     private boolean _barcodeScannerEnabled = false;
+    private boolean colorExtractionEnabled = false;
+
     private List<String> _barCodeTypes = null;
     private int _orientation = -1;
     private int _actualDeviceOrientation = 0;
     private int _adjustedDeviceOrientation = 0;
+    private String currentColor = "#ffffff";
 
     public static RCTCamera getInstance() {
         return ourInstance;
@@ -46,6 +49,14 @@ public class RCTCamera {
             }
         }
         return _cameras.get(type);
+    }
+
+    public void  setCurrentColor(String color){
+        this.currentColor = color;
+    }
+
+    public String getCurrentColor() {
+        return currentColor;
     }
 
     public void releaseCameraInstance(int type) {
@@ -164,8 +175,16 @@ public class RCTCamera {
       return _barcodeScannerEnabled;
     }
 
+    public boolean isColorExtractionEnabled() {
+        return colorExtractionEnabled;
+    }
+
     public void setBarcodeScannerEnabled(boolean barcodeScannerEnabled) {
         _barcodeScannerEnabled = barcodeScannerEnabled;
+    }
+
+    public void setColorExtractionEnabled(boolean colorExtractionEnabled) {
+        this.colorExtractionEnabled = colorExtractionEnabled;
     }
 
     public List<String> getBarCodeTypes() {
