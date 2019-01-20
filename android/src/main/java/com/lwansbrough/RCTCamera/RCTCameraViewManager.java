@@ -49,16 +49,17 @@ public class RCTCameraViewManager extends ViewGroupManager<FrameLayout> {
             gd.setSize(50,50);
             gd.setGradientRadius(50);
             previewView.setBackground(gd);
+            cameraView.setOnColorChangeListener(new OnColorChangeListener() {
+                @Override
+                public void onColorChangeListener(String hexColor) {
+                    int fillColor = Color.parseColor(hexColor);
+                    gd.setColor(fillColor);
+
+                }
+            });
+
         }
 
-        cameraView.setOnColorChangeListener(new OnColorChangeListener() {
-            @Override
-            public void onColorChangeListener(String hexColor) {
-                int fillColor = Color.parseColor(hexColor);
-                gd.setColor(fillColor);
-
-            }
-        });
 
         frameLayout.addView(cameraView);
         if(cameraView.isColorExtractionEnabled()) {
