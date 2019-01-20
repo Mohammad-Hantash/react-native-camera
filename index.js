@@ -48,9 +48,8 @@ function convertNativeProps(props) {
     newProps.captureTarget = Camera.constants.CaptureTarget[props.captureTarget];
   }
 
-  // do not register barCodeTypes if no barcode listener
-  if (typeof props.onBarCodeRead !== 'function') {
-    newProps.barCodeTypes = [];
+  if (typeof props.captureTarget === 'string') {
+    newProps.captureTarget = Camera.constants.CaptureTarget[props.captureTarget];
   }
 
   newProps.barcodeScannerEnabled = typeof props.onBarCodeRead === 'function'
@@ -101,6 +100,8 @@ export default class Camera extends Component {
     barcodeScannerEnabled: PropTypes.bool,
     onFocusChanged: PropTypes.func,
     onZoomChanged: PropTypes.func,
+    onColorReceived : PropTypes.func,
+    enableColorExtraction: PropTypes.bool,
     mirrorImage: PropTypes.bool,
     fixOrientation: PropTypes.bool,
     barCodeTypes: PropTypes.array,
@@ -120,7 +121,7 @@ export default class Camera extends Component {
   };
 
   static defaultProps = {
-    aspect: CameraManager.Aspect.fill,
+    aspect: CameraManager.Aspect.fit,
     type: CameraManager.Type.back,
     orientation: CameraManager.Orientation.auto,
     fixOrientation: false,
@@ -133,6 +134,7 @@ export default class Camera extends Component {
     playSoundOnCapture: true,
     torchMode: CameraManager.TorchMode.off,
     mirrorImage: false,
+    enableColorExtraction:false,
     barCodeTypes: Object.values(CameraManager.BarCodeType),
   };
 
@@ -163,6 +165,11 @@ export default class Camera extends Component {
       const isAuthorized = await check();
       this.setState({ isAuthorized });
     }
+
+    this.onColorChangedListener = Platform.select({
+      ios: NativeAppEventEmitter.addListener('OnColorReceived', this._onColorReceived),
+      android: DeviceEventEmitter.addListener('OnColorReceived',  this._onColorReceived)
+    })
   }
 
   componentWillUnmount() {
@@ -204,6 +211,12 @@ export default class Camera extends Component {
     return <RCTCamera ref={CAMERA_REF} {...nativeProps} />;
   }
 
+  _onColorReceived = (data) => {
+    if (this.props.onColorReceived) {
+      this.props.onColorReceived(data)
+    }
+  };
+
   _onBarCodeRead = (data) => {
     if (this.props.onBarCodeRead) {
       this.props.onBarCodeRead(data)
@@ -234,6 +247,10 @@ export default class Camera extends Component {
     }
 
     return CameraManager.capture(options);
+  }
+
+  getCurrentColor() {
+    return CameraManager.getCurrentColor();
   }
 
   addFilterImageOverlayOnBaseImage(baseImageURI, filterImageURI){
