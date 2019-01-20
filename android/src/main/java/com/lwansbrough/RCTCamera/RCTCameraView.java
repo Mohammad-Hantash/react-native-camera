@@ -203,7 +203,7 @@ public class RCTCameraView extends ViewGroup {
         RCTCamera.getInstance().setColorExtractionEnabled(colorExtractionEnabled);
     }
 
-    public void isColorExtractionEnabled() {
+    public boolean isColorExtractionEnabled() {
        return RCTCamera.getInstance().isColorExtractionEnabled();
     }
 }
