@@ -18,7 +18,7 @@ import com.facebook.react.uimanager.annotations.ReactProp;
 import java.util.List;
 import java.util.ArrayList;
 
-public class RCTCameraViewManager extends ViewGroupManager<FrameLayout> {
+public class RCTCameraViewManager extends ViewGroupManager<LinearLayout> {
     private static final String REACT_CLASS = "RCTCamera";
     RCTCameraView cameraView;
     View previewView;
@@ -30,8 +30,10 @@ public class RCTCameraViewManager extends ViewGroupManager<FrameLayout> {
 
     @Override
     public FrameLayout createViewInstance(ThemedReactContext context) {
+        LinearLayout linearLayout = new LinearLayout(context);
+        linearLayout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
         FrameLayout frameLayout = new FrameLayout(context);
-        frameLayout.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        frameLayout.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         cameraView = new RCTCameraView(context);
 
@@ -66,16 +68,17 @@ public class RCTCameraViewManager extends ViewGroupManager<FrameLayout> {
             frameLayout.addView(previewView);
         }
 
-        return frameLayout;
+        linearLayout.addView(frameLayout);
+        return linearLayout;
     }
 
     @ReactProp(name = "aspect")
-    public void setAspect(FrameLayout view, int aspect) {
+    public void setAspect(LinearLayout view, int aspect) {
         cameraView.setAspect(aspect);
     }
 
     @ReactProp(name = "captureMode")
-    public void setCaptureMode(FrameLayout view, final int captureMode) {
+    public void setCaptureMode(LinearLayout view, final int captureMode) {
         // Note that this in practice only performs any additional setup necessary for each mode;
         // the actual indication to capture a still or record a video when capture() is called is
         // still ultimately decided upon by what it in the options sent to capture().
@@ -83,54 +86,54 @@ public class RCTCameraViewManager extends ViewGroupManager<FrameLayout> {
     }
 
     @ReactProp(name = "captureTarget")
-    public void setCaptureTarget(FrameLayout view, int captureTarget) {
+    public void setCaptureTarget(LinearLayout view, int captureTarget) {
         // No reason to handle this props value here since it's passed again to the RCTCameraModule capture method
     }
 
     @ReactProp(name = "type")
-    public void setType(FrameLayout view, int type) {
+    public void setType(LinearLayout view, int type) {
         cameraView.setCameraType(type);
     }
 
     @ReactProp(name = "captureQuality")
-    public void setCaptureQuality(FrameLayout view, String captureQuality) {
+    public void setCaptureQuality(LinearLayout view, String captureQuality) {
         cameraView.setCaptureQuality(captureQuality);
     }
 
     @ReactProp(name = "torchMode")
-    public void setTorchMode(FrameLayout view, int torchMode) {
+    public void setTorchMode(LinearLayout view, int torchMode) {
         cameraView.setTorchMode(torchMode);
     }
 
     @ReactProp(name = "flashMode")
-    public void setFlashMode(FrameLayout view, int flashMode) {
+    public void setFlashMode(LinearLayout view, int flashMode) {
         cameraView.setFlashMode(flashMode);
     }
 
     @ReactProp(name = "orientation")
-    public void setOrientation(FrameLayout view, int orientation) {
+    public void setOrientation(LinearLayout view, int orientation) {
         cameraView.setOrientation(orientation);
     }
 
     @ReactProp(name = "captureAudio")
-    public void setCaptureAudio(FrameLayout view, boolean captureAudio) {
+    public void setCaptureAudio(LinearLayout view, boolean captureAudio) {
         // TODO - implement video mode
     }
 
     @ReactProp(name = "barcodeScannerEnabled")
-    public void setBarcodeScannerEnabled(FrameLayout view, boolean barcodeScannerEnabled) {
+    public void setBarcodeScannerEnabled(LinearLayout view, boolean barcodeScannerEnabled) {
         cameraView.setBarcodeScannerEnabled(barcodeScannerEnabled);
     }
 
     @ReactProp(name = "enableColorExtraction")
-    public void setColorExtractionEnabled(FrameLayout view, boolean enableColorExtraction) {
+    public void setColorExtractionEnabled(LinearLayout view, boolean enableColorExtraction) {
         cameraView.setColorExtractionEnabled(enableColorExtraction);
     }
 
 
 
     @ReactProp(name = "barCodeTypes")
-    public void setBarCodeTypes(FrameLayout view, ReadableArray barCodeTypes) {
+    public void setBarCodeTypes(LinearLayout view, ReadableArray barCodeTypes) {
         if (barCodeTypes == null) {
             return;
         }
