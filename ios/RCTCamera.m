@@ -83,15 +83,49 @@
 
 - (void)layoutSubviews
 {
-  [super layoutSubviews];
+    
+    [super layoutSubviews];
   self.manager.previewLayer.frame = self.bounds;
   [self setBackgroundColor:[UIColor blackColor]];
-  [self.layer insertSublayer:self.manager.previewLayer atIndex:0];
+    
+    [self.layer insertSublayer:self.manager.previewLayer atIndex:0];
+    if(!_isViewAdded){
+        int rad = 55;
+        _roundedView= [CALayer layer];
+        _roundedView.frame = CGRectMake(self.center.x-130, self.center.y-(rad/2), rad, rad);
+         _roundedView.backgroundColor = [[UIColor clearColor] CGColor];
+        _roundedView.cornerRadius = rad/2;
+        _roundedView.borderColor = [[UIColor whiteColor] CGColor];
+        _roundedView.borderWidth = 2;
+        _isViewAdded = true;
+        [self.layer insertSublayer:_roundedView atIndex:1];
+    }
+}
+
+-(void) updatePreviewColor:(int )red green:(int)green blue:(int)blue{
+    
+    
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        //load your data here.
+        dispatch_async(dispatch_get_main_queue(), ^{
+           
+            if(_roundedView){
+                CGFloat colors[] = { red/255.0, green/255.0, blue/255.0, 1.0 };
+                _roundedView.backgroundColor = CGColorCreate(CGColorSpaceCreateDeviceRGB(),colors);
+            }
+        });
+    });
+    
+
 }
 
 - (void)insertReactSubview:(UIView *)view atIndex:(NSInteger)atIndex
 {
+    
   [self insertSubview:view atIndex:atIndex + 1];
+
+  
+
   return;
 }
 
