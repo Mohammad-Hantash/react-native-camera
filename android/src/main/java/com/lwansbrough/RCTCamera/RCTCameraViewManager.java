@@ -29,9 +29,7 @@ public class RCTCameraViewManager extends ViewGroupManager<LinearLayout> {
     }
 
     @Override
-    public FrameLayout createViewInstance(ThemedReactContext context) {
-        LinearLayout linearLayout = new LinearLayout(context);
-        linearLayout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+    public LinearLayout createViewInstance(ThemedReactContext context) {
         FrameLayout frameLayout = new FrameLayout(context);
         frameLayout.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
@@ -62,14 +60,10 @@ public class RCTCameraViewManager extends ViewGroupManager<LinearLayout> {
 
         }
 
-
         frameLayout.addView(cameraView);
-        if(cameraView.isColorExtractionEnabled()) {
-            frameLayout.addView(previewView);
-        }
+        frameLayout.addView(previewView);
 
-        linearLayout.addView(frameLayout);
-        return linearLayout;
+        return frameLayout;
     }
 
     @ReactProp(name = "aspect")
@@ -128,6 +122,9 @@ public class RCTCameraViewManager extends ViewGroupManager<LinearLayout> {
     @ReactProp(name = "enableColorExtraction")
     public void setColorExtractionEnabled(LinearLayout view, boolean enableColorExtraction) {
         cameraView.setColorExtractionEnabled(enableColorExtraction);
+        if(!enableColorExtraction){
+            previewView.setVisibility(View.GONE);
+        }
     }
 
 
