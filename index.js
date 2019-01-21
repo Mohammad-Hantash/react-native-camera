@@ -208,6 +208,17 @@ export default class Camera extends Component {
     const style = [styles.base, this.props.style];
     const nativeProps = convertNativeProps(this.props);
 
+    if(Platform.OS === 'android' && this.props.enableColorExtraction){ 
+     
+      return <RCTCameraColorExtractor ref={CAMERA_REF} {...nativeProps} />;
+    }
+
+    console.log('====================================');
+    console.log("DDDDDDDDDDDDDDDDD");
+    console.log('====================================');
+    
+  
+
     return <RCTCamera ref={CAMERA_REF} {...nativeProps} />;
   }
 
@@ -282,7 +293,6 @@ export default class Camera extends Component {
 }
 
 export const constants = Camera.constants;
-
 const RCTCamera = requireNativeComponent('RCTCamera', Camera, {nativeOnly: {
   testID: true,
   renderToHardwareTextureAndroid: true,
@@ -292,6 +302,16 @@ const RCTCamera = requireNativeComponent('RCTCamera', Camera, {nativeOnly: {
   accessibilityComponentType: true,
   onLayout: true
 }});
+
+const RCTCameraColorExtractor = Platform.OS === "android" ? requireNativeComponent('RCTCameraColorExtractor', Camera, {nativeOnly: {
+  testID: true,
+  renderToHardwareTextureAndroid: true,
+  accessibilityLabel: true,
+  importantForAccessibility: true,
+  accessibilityLiveRegion: true,
+  accessibilityComponentType: true,
+  onLayout: true
+}}) : null;
 
 const styles = StyleSheet.create({
   base: {},
