@@ -34,6 +34,8 @@ public class RCTCameraView extends ViewGroup {
     private int _flashMode = -1;
     private OnColorChangeListener onColorChangeListener;
 
+    private int _zoom = 0;
+    private boolean _clearWindowBackground = false;
 
     public RCTCameraView(Context context) {
         super(context);
@@ -48,6 +50,7 @@ public class RCTCameraView extends ViewGroup {
                 }
             }
         };
+
         if (_orientationListener.canDetectOrientation()) {
             _orientationListener.enable();
         } else {
@@ -62,8 +65,9 @@ public class RCTCameraView extends ViewGroup {
 
     @Override
     public void onViewAdded(View child) {
-        if(_viewFinder == child) return;
-
+        if (this._viewFinder == child) return;
+        // remove and readd view to make sure it is in the back.
+        // @TODO figure out why there was a z order issue in the first place and fix accordingly.
         this.removeView(this._viewFinder);
         this.addView(this._viewFinder, 0);
     }
@@ -86,6 +90,10 @@ public class RCTCameraView extends ViewGroup {
             if (-1 != this._torchMode) {
                 _viewFinder.setTorchMode(this._torchMode);
             }
+            if (0 != this._zoom) {
+                _viewFinder.setZoom(this._zoom);
+            }
+            _viewFinder.setClearWindowBackground(this._clearWindowBackground);
             this.addView(_viewFinder);
         }
     }
@@ -119,6 +127,13 @@ public class RCTCameraView extends ViewGroup {
         }
     }
 
+    public void setZoom(int zoom) {
+        this._zoom = zoom;
+        if (this._viewFinder != null) {
+            this._viewFinder.setZoom(zoom);
+        }
+    }
+
     public void setOrientation(int orientation) {
         RCTCamera.getInstance().setOrientation(orientation);
         if (this._viewFinder != null) {
@@ -132,6 +147,23 @@ public class RCTCameraView extends ViewGroup {
 
     public void setBarCodeTypes(List<String> types) {
         RCTCamera.getInstance().setBarCodeTypes(types);
+    }
+
+    public void setClearWindowBackground(boolean clearWindowBackground) {
+        this._clearWindowBackground = clearWindowBackground;
+        if (this._viewFinder != null) {
+            this._viewFinder.setClearWindowBackground(clearWindowBackground);
+        }
+    }
+
+    public void stopPreview() {
+        if (_viewFinder == null) return;
+        _viewFinder.stopPreview();
+    }
+
+    public void startPreview() {
+        if (_viewFinder == null) return;
+        _viewFinder.startPreview();
     }
 
     private boolean setActualDeviceOrientation(Context context) {
@@ -190,6 +222,8 @@ public class RCTCameraView extends ViewGroup {
 
         int viewFinderPaddingX = (int) ((width - viewfinderWidth) / 2);
         int viewFinderPaddingY = (int) ((height - viewfinderHeight) / 2);
+
+        RCTCamera.getInstance().setPreviewVisibleSize(_viewFinder.getCameraType(), (int) width, (int) height);
 
         this._viewFinder.layout(viewFinderPaddingX, viewFinderPaddingY, viewFinderPaddingX + viewfinderWidth, viewFinderPaddingY + viewfinderHeight);
         this.postInvalidate(this.getLeft(), this.getTop(), this.getRight(), this.getBottom());
