@@ -15,6 +15,7 @@ import com.lwansbrough.RCTCamera.RCTCameraViewManager;
 import org.reactnative.facedetector.FaceDetectorModule;
 
 
+public class RNCameraPackage implements ReactPackage {
     @Override
     public List<NativeModule> createNativeModules(ReactApplicationContext reactApplicationContext) {
         return Arrays.<NativeModule>asList(
