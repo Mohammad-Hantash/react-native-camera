@@ -10,4 +10,5 @@
 @property BOOL isViewAdded;
 @property CALayer * roundedView;
 -(void) updatePreviewColor:(int )red green:(int)green blue:(int)blue;
+@property BOOL enableColorExtraction;
 @end
