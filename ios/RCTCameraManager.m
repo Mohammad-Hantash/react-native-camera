@@ -302,6 +302,9 @@ RCT_CUSTOM_VIEW_PROPERTY(mirrorImage, BOOL, RCTCamera) {
 
 RCT_CUSTOM_VIEW_PROPERTY(enableColorExtraction, BOOL, RCTCamera) {
     self.enableColorExtraction = [RCTConvert BOOL:json];
+    if(self.camera){
+        [self.camera setEnableColorExtraction:self.enableColorExtraction];
+    }
 }
 
 RCT_CUSTOM_VIEW_PROPERTY(barCodeTypes, NSArray, RCTCamera) {
