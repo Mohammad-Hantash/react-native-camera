@@ -89,7 +89,7 @@
   [self setBackgroundColor:[UIColor blackColor]];
     
     [self.layer insertSublayer:self.manager.previewLayer atIndex:0];
-    if(!_isViewAdded){
+     if(!_isViewAdded && self.enableColorExtraction){
         int rad = 55;
         _roundedView= [CALayer layer];
         _roundedView.frame = CGRectMake(self.center.x-130, self.center.y-(rad/2), rad, rad);
