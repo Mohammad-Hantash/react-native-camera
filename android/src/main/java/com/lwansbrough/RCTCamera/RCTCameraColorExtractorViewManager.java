@@ -1,5 +1,6 @@
 package com.lwansbrough.RCTCamera;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.support.annotation.Nullable;
@@ -28,17 +29,24 @@ public class RCTCameraColorExtractorViewManager extends ViewGroupManager<FrameLa
         return REACT_CLASS;
     }
 
+    private int convertToDP(ThemedReactContext context, int dp){
+        final float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (dp *scale);
+    }
+
     @Override
     public FrameLayout createViewInstance(ThemedReactContext context) {
         FrameLayout frameLayout = new FrameLayout(context);
         frameLayout.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         cameraView = new RCTCameraView(context);
+        int width = convertToDP(context,35);
+        int height = convertToDP(context,35);
 
         previewView = new TextView(context);
-        FrameLayout.LayoutParams previewParams= new FrameLayout.LayoutParams(200,200);
+        FrameLayout.LayoutParams previewParams= new FrameLayout.LayoutParams(width,height);
         previewParams.gravity = Gravity.CENTER;
-        previewParams.setMargins(0,0,380,0);
+        previewParams.setMargins(0,0,convertToDP(context,105),0);
         previewView.setLayoutParams(previewParams);
 
 
